@@ -1,0 +1,24 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Karting Live</title>
+<style>:root{--bg:#111;--fg:#eee;--row:#1b1b1b;--fav:#2a2f55}body{font:14px system-ui;background:var(--bg);color:var(--fg);margin:0}
+header{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;background:#6a1bd1;flex-wrap:wrap}
+#rem{font:700 22px ui-monospace,monospace}.w{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}
+th{position:sticky;top:0;z-index:1;background:#222;text-align:left;padding:6px 10px}td{padding:5px 10px;border-bottom:1px solid #2a2a2a;font-variant-numeric:tabular-nums}.w{max-width:1100px;margin:0 auto}tr{background:var(--row)}tr.f{background:var(--fav)}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;cursor:pointer;vertical-align:middle}.green{background:#2c2}.yellow{background:#fc2}.red{background:#e33}.grey{background:#666}
+#tip{position:fixed;background:#000;border:1px solid #888;padding:4px 8px;border-radius:6px;display:none;z-index:9}
+dialog{background:#222;color:var(--fg);border:1px solid #666;border-radius:10px;max-width:520px}.al{margin:6px 0;padding:6px;border-left:5px solid}.al.yellow{border-color:#fc2}.al.red{border-color:#e33}
+@media(max-width:700px){.h{display:none}}</style>
+<header><div><b id=n></b><br><span id=t></span></div><div id=rem></div></header>
+<div class=w><table><thead><tr><th>Pos<th>Kart<th>Equipo<th>Última<th>Dist. 1º<th class=h>Dist. delante<th>Pits<th class=h>Desde pit<th>En box<th>●</tr></thead><tbody id=b></tbody></table></div>
+<div id=tip></div><dialog id=dlg></dialog>
+<script>let D={teams:[]},t0=0;const $=s=>document.querySelector(s);
+const f=s=>{if(s==null)return'';s=Math.max(0,Math.round(s));const h=s/3600|0,m=(s%3600)/60|0,x=s%60;return(h?h+':'+String(m).padStart(2,0):m)+':'+String(x).padStart(2,0)};
+const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function load(){try{D=await(await fetch('api/state')).json();t0=Date.now();draw()}catch(x){}}
+function draw(){$('#n').textContent=D.name||'';$('#t').textContent=[D.title,D.track].filter(Boolean).join(' · ');
+$('#b').innerHTML=D.teams.map((x,i)=>`<tr class="${x.follow?'f':''}"><td data-tip="Posición real (con paradas pendientes): ${x.vpos}">${x.pos}<td>${e(x.kart)}<td data-tip="Piloto: ${e(x.driver)}">${e(x.name)}<td>${e(x.last)}<td>${e(x.gap)}<td class=h>${e(x.interval)}<td>${x.pits}<td class=h>${f(x.stint_s)}<td>${x.in_pit?f(x.pit_s):''}<td><span class="dot ${x.level}" onclick="pop(${i})"></span></tr>`).join('')}
+function pop(i){const x=D.teams[i];$('#dlg').innerHTML=`<b>#${e(x.kart)} ${e(x.name)}</b> · ${e(x.driver)}<br>`+(x.alerts.length?x.alerts.map(a=>`<div class="al ${a.level}">${e(a.text)}</div>`).join(''):(x.level=='grey'?'<div class="al">Sin datos de vueltas todavía</div>':'<div class="al">Todo correcto</div>'))+'<form method=dialog><button>Cerrar</button></form>';$('#dlg').showModal()}
+setInterval(()=>{if(D.remaining_s!=null)$('#rem').textContent=f(D.remaining_s-(Date.now()-t0)/1000)},1000);setInterval(load,2000);load();
+let tm,tip=$('#tip');const show=(el,x,y)=>{tip.textContent=el.dataset.tip;tip.style.cssText=`display:block;left:${Math.min(x,innerWidth-200)}px;top:${y+12}px`};
+document.addEventListener('mouseover',ev=>{const el=ev.target.closest('[data-tip]');if(el)show(el,ev.clientX,ev.clientY)});document.addEventListener('mouseout',()=>tip.style.display='none');
+document.addEventListener('touchstart',ev=>{const el=ev.target.closest('[data-tip]');if(!el)return;const t=ev.touches[0];tm=setTimeout(()=>show(el,t.clientX,t.clientY),450)});
+['touchend','touchmove'].forEach(n=>document.addEventListener(n,()=>{clearTimeout(tm);setTimeout(()=>tip.style.display='none',1500)}));</script>

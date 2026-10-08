@@ -1,0 +1,20 @@
+# Arranque:  docker compose up -d --build        Ver web: http://localhost:<web.port de race.cfg>
+# restart: unless-stopped => vuelve solo tras reiniciar el equipo si estaba arrancado; si lo paras tú, no.
+# Borrar datos:  docker compose down -v   (o reset_db = always en race.cfg)
+# network_mode: host => el puerto sale de race.cfg (Linux). En Windows/Mac usa ports: ["8090:8090"] y quita network_mode.
+services:
+  collector:
+    build: .
+    command: python collector.py
+    network_mode: host
+    restart: unless-stopped
+    volumes: ["./race.cfg:/app/race.cfg:ro", "data:/data"]
+  web:
+    build: .
+    command: python web.py
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [collector]
+    volumes: ["./race.cfg:/app/race.cfg:ro", "data:/data"]
+volumes:
+  data:
