@@ -6,15 +6,19 @@ services:
   collector:
     build: .
     command: python collector.py
-    network_mode: host
     restart: unless-stopped
     volumes: ["./race.cfg:/app/race.cfg:ro", "data:/data"]
   web:
     build: .
     command: python web.py
-    network_mode: host
     restart: unless-stopped
     depends_on: [collector]
+    networks: [default, proxy-net]
     volumes: ["./race.cfg:/app/race.cfg:ro", "data:/data"]
+    
 volumes:
   data:
+
+networks:
+  proxy-net:
+    external: true         
