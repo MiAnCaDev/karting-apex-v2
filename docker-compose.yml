@@ -5,11 +5,15 @@
 services:
   collector:
     build: .
+    image: karting-collector
+    container_name: karting-collector
     command: python collector.py
     restart: unless-stopped
     volumes: ["./race.cfg:/app/race.cfg:ro", "data:/data"]
   web:
     build: .
+    image: karting-web
+    container_name: karting-web
     command: python web.py
     restart: unless-stopped
     depends_on: [collector]
